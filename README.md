@@ -81,7 +81,7 @@ Workflow code is generated as stubs. You add real business logic later.
 ## Install
 
 ```bash
-pip install git+https://github.com/YOUR_GITHUB_USERNAME/specforge
+pip install git+https://github.com/jmpanal/specforge
 ```
 
 Local development:

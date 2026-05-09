@@ -21,6 +21,7 @@ TERMS = [
 IGNORED_DIRS = {".git", ".venv", "venv", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "dist", "build", "htmlcov", ".specforge/cache"}
 IGNORED_SUFFIXES = {".pyc", ".png", ".jpg", ".jpeg", ".gif", ".ico", ".sqlite3"}
 ALLOWED_PUBLIC_TEXT = {".gitignore", "docs/benchmarks.md", "docs/security.md", "specforge/privacy.py", "tests/test_privacy.py"}
+ALLOWED_PUBLIC_LINES = {"pip install git+https://github.com/jmpanal/specforge"}
 
 
 def scan(root: str | Path = ".") -> list[tuple[Path, int, str]]:
@@ -37,6 +38,8 @@ def scan(root: str | Path = ".") -> list[tuple[Path, int, str]]:
         haystack_lines = text.splitlines()
         for line_no, line in enumerate(haystack_lines, start=1):
             lowered = line.lower()
+            if lowered.strip() in ALLOWED_PUBLIC_LINES:
+                continue
             if any(_matches(term, lowered) for term in TERMS):
                 matches.append((rel, line_no, line.strip()))
     return matches
