@@ -1,0 +1,1 @@
+"""FastAPI SQLite basic adapter."""

@@ -1,0 +1,54 @@
+app RecipePriceFinder
+
+role Cook
+role Reviewer
+
+model Recipe
+  title text required
+  source_image image optional
+  status enum uploaded reviewing priced
+
+model Ingredient
+  recipe ref Recipe required
+  name text required
+  quantity text optional
+
+model ProductOffer
+  ingredient ref Ingredient required
+  vendor text required
+  price money required
+  url url optional
+
+screen RecipeUpload
+  upload Recipe
+  allowed Cook
+
+screen IngredientReview
+  table Ingredient
+  action edit
+  allowed Reviewer
+
+screen PriceComparison
+  table ProductOffer
+  filter vendor
+  allowed Cook
+
+workflow ExtractIngredients
+  when Cook creates Recipe
+  require Recipe.status = uploaded
+  set Recipe.status reviewing
+  notify Reviewer
+
+workflow ComparePrices
+  when Reviewer compares Ingredient
+  require Ingredient.name != empty
+  set Recipe.status priced
+
+policy RecipeAccess
+  allow Cook create Recipe
+  allow Cook read ProductOffer
+  allow Reviewer manage Ingredient
+
+job RefreshPriceOffers
+  every day
+  notify Reviewer

@@ -1,0 +1,57 @@
+app SoftwareSpendApproval
+
+role Employee
+role Manager
+role Finance
+
+model SoftwareRequest
+  employee_name text required
+  software_name text required
+  business_reason text required
+  monthly_cost money required
+  status enum draft submitted pending_finance approved rejected
+  submitted_at datetime optional
+
+screen RequestList
+  table SoftwareRequest
+  filter status
+  action create
+  action edit
+  allowed Employee
+  allowed Manager
+  allowed Finance
+
+screen RequestForm
+  form SoftwareRequest
+  allowed Employee
+
+workflow SubmitSoftwareRequest
+  when Employee submits SoftwareRequest
+  require SoftwareRequest.status = draft
+  set SoftwareRequest.status submitted
+  notify Manager
+
+workflow ApproveSoftwareRequest
+  when Manager approves SoftwareRequest
+  require SoftwareRequest.status = submitted
+  if SoftwareRequest.monthly_cost > 500
+    set SoftwareRequest.status pending_finance
+    notify Finance
+  else
+    set SoftwareRequest.status approved
+
+workflow FinanceReview
+  when Finance reviews SoftwareRequest
+  require SoftwareRequest.status = pending_finance
+  set SoftwareRequest.status approved
+
+policy SoftwareRequestAccess
+  allow Employee create SoftwareRequest
+  allow Employee read SoftwareRequest
+  allow Manager manage SoftwareRequest
+  allow Finance read SoftwareRequest
+  allow Finance update SoftwareRequest
+
+job WeeklySoftwareSpendSummary
+  every week
+  notify Finance

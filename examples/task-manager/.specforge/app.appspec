@@ -1,0 +1,36 @@
+app TaskManager
+
+role User
+role Admin
+
+model Task
+  title text required
+  description text optional
+  status enum todo doing done
+  owner text required
+  created_at datetime
+
+screen TaskList
+  table Task
+  filter status
+  action create
+  action edit
+  allowed User
+
+screen TaskForm
+  form Task
+  allowed User
+
+workflow CompleteTask
+  when User completes Task
+  require Task.status != done
+  set Task.status done
+
+policy TaskAccess
+  allow User read Task
+  allow User create Task
+  allow Admin manage Task
+
+job DailyTaskSummary
+  every day
+  notify Admin
