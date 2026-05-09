@@ -2,32 +2,21 @@
 
 Executable specs for coding agents.
 
-SpecForge is a small Python CLI that turns one app spec into a generated FastAPI + SQLite API project.
+SpecForge is a Python CLI for projects where coding agents make repeated application changes. Instead of asking an agent to patch models, schemas, routes, tests, documentation, and client code by hand, you give the agent a smaller surface to edit: one application spec.
 
-It is for Codex, Claude Code, Cursor, and similar coding agents.
+The spec lives in `.specforge/app.appspec`. It describes the app in terms of models, screens, workflows, policies, and jobs. SpecForge reads that spec, validates it, shows which files it plans to write, and generates a consistent FastAPI and SQLite API project.
 
 **Agent edited 1 spec file instead of 12 source files.**
 
-## The Problem
+## Why This Helps
 
-Coding agents are good at code, but app changes often spread across many files:
+Coding agents are useful because they can move through code quickly. The same speed can become a problem when a change touches many files. A new approval rule might require a database field, a schema change, a route update, service logic, permissions, fixtures, assertions, docs, and client code. If the agent misses one of those places, the result can look complete while still being inconsistent.
 
-- database model
-- schema
-- route
-- service
-- permissions
-- tests
-- docs
-- client code
+SpecForge changes the workflow. The agent edits the product intent first. The generator then applies that intent to the generated code in a repeatable way. This does not remove the need to review code. It reduces the number of places where the agent has to make judgment calls for routine app changes.
 
-That gives the agent a large control surface. One missed file can break the change.
+## A Small Example
 
-## The SpecForge Way
-
-Put the app intent in `.specforge/app.appspec`.
-
-Example:
+Here is a workflow from the software spend approval example.
 
 ```appspec
 workflow ApproveSoftwareRequest
@@ -40,7 +29,7 @@ workflow ApproveSoftwareRequest
     set SoftwareRequest.status approved
 ```
 
-Then run:
+That block says what should happen when a manager approves a software request. A normal coding agent might spread that change across many files. With SpecForge, the agent edits the workflow block, then runs validation, planning, and generation.
 
 ```bash
 specforge validate
@@ -48,11 +37,11 @@ specforge plan
 specforge apply
 ```
 
-SpecForge validates the spec, shows the generated file plan, then writes consistent API code.
+`validate` checks the spec and prints specific errors. `plan` shows the files that would be created or updated. `apply` writes the generated FastAPI and SQLite project.
 
-## What It Generates Today
+## What Gets Generated
 
-v0 generates an API-only FastAPI + SQLite project:
+SpecForge v0 generates an API project. It includes FastAPI routes, SQLite persistence, Pydantic schemas, CRUD helpers, workflow stubs, tests, and a custom folder for user owned code.
 
 ```text
 generated/
@@ -74,9 +63,7 @@ generated/
     test_workflows.py
 ```
 
-It does not generate frontend code in v0.
-
-Workflow code is generated as stubs. You add real business logic later.
+Workflow support is intentionally limited in v0. SpecForge generates workflow metadata and service stubs, but it does not pretend to implement every business process. You put real custom behavior in the generated `custom/` folder when the spec is not enough.
 
 ## Install
 
@@ -84,7 +71,7 @@ Workflow code is generated as stubs. You add real business logic later.
 pip install git+https://github.com/jmpanal/specforge
 ```
 
-Local development:
+For local development:
 
 ```bash
 pip install -e .
@@ -92,135 +79,86 @@ pip install -e .
 
 ## Quickstart
 
-Create a new SpecForge setup:
+Create a SpecForge setup in a repo.
 
 ```bash
 specforge init
 ```
 
-Validate the spec:
+Validate the default spec.
 
 ```bash
 specforge validate
 ```
 
-Preview generated files:
+Preview the generated files.
 
 ```bash
 specforge plan
 ```
 
-Generate code:
+Generate the API project.
 
 ```bash
 specforge apply
 ```
 
-Run the built-in before/after demo:
+Run the demo.
 
 ```bash
 specforge demo
 ```
 
-## Main Demo
+The demo prints the before and after story for the software spend approval example, including the exact file list a normal agent might patch.
 
-The main demo is:
+## How To Use It With Coding Agents
 
-```text
-examples/software-spend-approval/.specforge/app.appspec
-```
+When you use Codex, Claude Code, Cursor, or another coding agent, ask the agent to read `.specforge/app.appspec` before editing generated code. For normal product behavior, the first edit should be in the spec.
 
-Run:
+The usual loop is simple. Edit the spec. Run `specforge validate`. Run `specforge plan`. Run `specforge apply`. Review the generated code. Only edit generated code directly when the spec cannot express what you need.
 
-```bash
-specforge demo
-```
-
-You will see the normal scattered-edit path and the SpecForge path.
-
-**Agent edited 1 spec file instead of 12 source files.**
-
-## Commands
-
-```bash
-specforge init
-specforge validate
-specforge plan
-specforge apply
-specforge doctor
-specforge explain
-specforge demo
-specforge privacy-scan
-```
-
-`privacy-scan` is a pre-publish check for common private artifacts.
+This works best when the change is about application structure, data models, CRUD behavior, approval flows, or workflow intent. It is less useful for highly custom code where the important details live inside hand written business logic.
 
 ## Examples
 
-- `examples/task-manager`
-- `examples/software-spend-approval`
-- `examples/recipe-price-finder`
+The repository includes three examples.
+
+1. Task manager. A small task CRUD app with a completion workflow.
+2. Software spend approval. The main demo, with Employee, Manager, and Finance roles.
+3. Recipe price finder. A workflow app for recipe upload, ingredient review, and price comparison stubs.
+
+The examples are meant to show that SpecForge is not tied to one specific app.
 
 ## What SpecForge Is
 
-- a compact application spec layer
-- a CLI
-- a parser
-- a validator
-- a planner
-- a deterministic generator
-- a mapping layer between app intent and generated source files
-- a workflow layer for coding agents inside a repo
+SpecForge is a compact application spec layer, a CLI, a parser, a validator, a planner, a deterministic generator, and a mapping layer between product intent and generated source files.
+
+It is built for agent workflows inside normal software repositories.
 
 ## What SpecForge Is Not
 
-- not a general-purpose programming language
-- not a replacement for Python, TypeScript, Go, Rust, or normal source code
-- not a magic app builder
-- not a prompt framework
-- not a replacement for code review
-- not production-ready for every use case
+SpecForge is not a general purpose programming language. It is not a replacement for Python, TypeScript, Go, Rust, or normal source code. It is not a magic app builder, a prompt framework, or a replacement for code review. It is experimental and not production ready for every use case.
 
-## Best Fit
+## Current Status
 
-Good fit:
+SpecForge is experimental. The first adapter generates FastAPI and SQLite API projects. Frontend generation is not included in v0. Workflow execution is stub based. Generated code should be reviewed before production use.
 
-- internal tools
-- CRUD apps
-- approval flows
-- workflow apps
-- business operations apps
+The best current use cases are internal tools, CRUD apps, approval flows, workflow apps, and business operations software.
 
-Weak fit today:
+## Prepublish Check
 
-- custom frontends
-- complex distributed systems
-- high-security production systems
-- apps where the DSL cannot express the behavior yet
+Before publishing a repo that uses SpecForge, run:
 
-## Agent Workflow
+```bash
+specforge privacy-scan
+```
 
-For Codex, Claude Code, Cursor, or similar tools:
-
-1. Read `.specforge/app.appspec`.
-2. Edit the spec first.
-3. Run `specforge validate`.
-4. Run `specforge plan`.
-5. Run `specforge apply`.
-6. Review generated output.
-7. Put custom code in generated `custom/` folders.
+The scan looks for common private artifacts such as local paths, credential markers, private notes, and accidental instruction files.
 
 ## Roadmap
 
-- Next.js adapter
-- Postgres adapter
-- Prisma adapter
-- Django adapter
-- VS Code syntax highlighting
-- Tree-sitter grammar
-- real workflow execution engine
-- benchmark suite
+Future work includes a Next.js adapter, a Postgres adapter, a Prisma adapter, a Django adapter, editor syntax support, a Tree sitter grammar, real workflow execution, and a benchmark suite.
 
 ## Contributing
 
-Try the examples. Open issues for missing DSL primitives, validation rules, or adapters.
+Try the examples and open issues for missing language primitives, validation rules, or adapters. Small, concrete issues are the most useful right now.
