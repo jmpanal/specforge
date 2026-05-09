@@ -8,6 +8,7 @@ from pathlib import Path
 from . import __version__
 from .demo import demo_output
 from .generate import write_generated_project
+from .guardrails import check_repo, format_check, format_inspection, inspect_repo, write_proposal
 from .parser import parse_file
 from .planner import format_plan, plan_files
 from .privacy import scan
@@ -53,24 +54,33 @@ DEFAULT_STACK = """stack fastapi-sqlite-basic
 
 AGENTS = """# SpecForge Agent Guide
 
-- When changing app behavior, edit `.specforge/app.appspec` first.
-- Run `specforge validate`.
-- Run `specforge plan`.
-- Run `specforge apply`.
-- Do not manually edit generated files unless required.
-- If custom code is needed, put it in generated custom extension folders.
-- Keep generated output deterministic.
-- Keep errors specific and actionable.
-- Run tests before finalizing changes.
+- Read `.specforge/change.md`.
+- Run `specforge inspect`.
+- Run `specforge propose`.
+- Implement the checklist in `.specforge/plan.md`.
+- Run `specforge check` before finalizing.
+- Keep changes small, deterministic, and covered by tests.
 """
 
 CLAUDE = """# SpecForge Claude Code Guide
 
-- Start behavior changes in `.specforge/app.appspec`.
-- Run `specforge validate`, then `specforge plan`, then `specforge apply`.
-- Avoid manual edits to generated files unless the spec cannot express the change.
-- Put custom logic in generated custom extension folders.
+- Read `.specforge/change.md`.
+- Run `specforge inspect`.
+- Run `specforge propose`.
+- Implement the checklist in `.specforge/plan.md`.
+- Run `specforge check` before finalizing.
 - Keep changes small, deterministic, and covered by tests.
+"""
+
+DEFAULT_CHANGE = """Describe the change you want in plain English.
+
+Example:
+I want users to upload a photo. The app should analyze the photo and return a short sentence listing the objects in it, such as sofa, table, and TV.
+"""
+
+DEFAULT_PLAN = """# SpecForge Change Plan
+
+Run `specforge propose` after writing `.specforge/change.md`.
 """
 
 
@@ -93,6 +103,13 @@ def main(argv: list[str] | None = None) -> int:
     p_apply.add_argument("spec_path", nargs="?", default=".specforge/app.appspec")
     p_apply.add_argument("--out", default="generated")
 
+    sub.add_parser("inspect")
+
+    p_propose = sub.add_parser("propose")
+    p_propose.add_argument("--change", default=".specforge/change.md")
+    p_propose.add_argument("--plan", default=".specforge/plan.md")
+
+    sub.add_parser("check")
     sub.add_parser("doctor")
     sub.add_parser("explain")
     sub.add_parser("demo")
@@ -107,6 +124,12 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_plan(args.spec_path, args.out)
     if args.command == "apply":
         return cmd_apply(args.spec_path, args.out)
+    if args.command == "inspect":
+        return cmd_inspect()
+    if args.command == "propose":
+        return cmd_propose(args.change, args.plan)
+    if args.command == "check":
+        return cmd_check()
     if args.command == "doctor":
         return cmd_doctor()
     if args.command == "explain":
@@ -124,6 +147,8 @@ def cmd_init(force: bool = False) -> int:
         ".specforge/app.appspec": DEFAULT_APP,
         ".specforge/stack.appspec": DEFAULT_STACK,
         ".specforge/specmap.json": "{}\n",
+        ".specforge/change.md": DEFAULT_CHANGE,
+        ".specforge/plan.md": DEFAULT_PLAN,
         "AGENTS.md": AGENTS,
         "CLAUDE.md": CLAUDE,
     }
@@ -138,8 +163,8 @@ def cmd_init(force: bool = False) -> int:
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
-    print("Created .specforge app files.")
-    print("Next: specforge validate && specforge plan && specforge apply")
+    print("Created .specforge files.")
+    print("Next: edit .specforge/change.md, then run specforge inspect && specforge propose")
     return 0
 
 
@@ -179,13 +204,38 @@ def cmd_apply(spec_path: str, out: str) -> int:
     return 0
 
 
+def cmd_inspect() -> int:
+    print(format_inspection(inspect_repo(".")))
+    return 0
+
+
+def cmd_propose(change: str, plan: str) -> int:
+    try:
+        output = write_proposal(".", change, plan)
+    except FileNotFoundError:
+        print(f"Missing change request: {change}")
+        print("Create it with plain English describing what you want Codex to build.")
+        return 1
+    print(output)
+    print(f"Wrote: {plan}")
+    return 0
+
+
+def cmd_check() -> int:
+    result = check_repo(".")
+    print(format_check(result))
+    serious = [warning for warning in result.warnings if not warning.startswith("No obvious") and not warning.startswith("No changed")]
+    return 1 if serious else 0
+
+
 def cmd_doctor() -> int:
     checks = [
         ("Python >= 3.11", sys.version_info >= (3, 11)),
         ("Package import", True),
         (".specforge exists", Path(".specforge").exists()),
-        ("stack.appspec exists", Path(".specforge/stack.appspec").exists()),
-        ("generated output exists", Path("generated").exists()),
+        ("change.md exists", Path(".specforge/change.md").exists()),
+        ("plan.md exists", Path(".specforge/plan.md").exists()),
+        ("git repo exists", Path(".git").exists()),
     ]
     exit_code = 0
     for name, ok in checks:

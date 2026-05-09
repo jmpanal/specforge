@@ -1,10 +1,9 @@
 # Security
 
-- Do not put secrets in `.appspec` files.
-- Generated apps are starter code.
-- Review generated code before production use.
-- External integrations need secure implementation.
-- Never commit API keys.
-- Generated apps are not automatically hardened for production.
+SpecForge does not make generated or agent-written code production safe by itself.
+
+Use `specforge check` after agent edits to catch common risks, especially upload changes without validation and environment variable usage without documentation.
 
 Use `specforge privacy-scan` before publishing.
+
+Review any external integration, upload handling, authentication, authorization, and credential handling before production use.

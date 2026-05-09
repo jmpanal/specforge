@@ -1,45 +1,45 @@
 # SpecForge
 
-Executable specs for coding agents.
+Guardrails for coding agents.
 
-SpecForge is a tool that helps coding agents make app changes by editing one simple spec file first.
+SpecForge helps Codex, Claude Code, Cursor, and similar tools make safer changes in an existing repo. You describe the change you want in plain English. SpecForge inspects the repo, creates a checklist for the agent, and checks the final diff for common missing pieces.
 
-Think of the spec file as a small blueprint for a backend app. It says what models exist, what fields they have, what workflows matter, and what basic rules the app should follow. SpecForge reads that blueprint, checks it for mistakes, shows which files it is going to create, and then generates backend code from it.
-
-The point is not to replace normal code. The point is to give coding agents a cleaner place to start. When an agent edits many files by hand, it can easily miss one. When the agent edits the spec first, SpecForge can generate the matching backend files in a repeatable way.
+The main idea is simple. Coding agents can move quickly, but they can also miss related files. A photo upload feature might need UI code, an API endpoint, file validation, a model or database change, tests, and documentation. SpecForge does not write the feature by itself. It helps the agent avoid treating the change as one isolated file edit.
 
 **Agent edited 1 spec file instead of 12 source files.**
 
-## For Example
+## A Beginner Example
 
-Imagine you have an app where employees request paid software, managers approve it, and finance needs to review expensive requests.
+Imagine you are building a mobile app where a user uploads a photo, and the app returns a sentence like this:
 
-Without SpecForge, a coding agent might need to edit the database model, the API schema, the route, the service logic, the permission check, test fixtures, test assertions, docs, and client code. That is a lot of places for one rule.
-
-With SpecForge, the agent can edit one workflow block in `.specforge/app.appspec`.
-
-```appspec
-workflow ApproveSoftwareRequest
-  when Manager approves SoftwareRequest
-  require SoftwareRequest.status = submitted
-  if SoftwareRequest.monthly_cost > 500
-    set SoftwareRequest.status pending_finance
-    notify Finance
-  else
-    set SoftwareRequest.status approved
+```text
+There is a sofa, a table, and a TV.
 ```
 
-In plain English, this says that a manager can approve a submitted software request. If the monthly cost is above 500, the request goes to finance. Otherwise, it is approved.
+You write that request in `.specforge/change.md` using normal language.
 
-After editing the spec, the agent runs three commands.
+```text
+I want users to upload a photo. The app should analyze the photo and return a short sentence listing the objects in it, such as sofa, table, and TV.
+```
+
+Then you run:
 
 ```bash
-specforge validate
-specforge plan
-specforge apply
+specforge inspect
+specforge propose
 ```
 
-`validate` checks that the spec makes sense. `plan` shows the files that SpecForge will create or update. `apply` writes the generated FastAPI and SQLite backend project.
+`inspect` looks at the repo and reports what kind of app it seems to be, where source files live, what test command probably exists, and whether there are obvious missing pieces.
+
+`propose` reads `.specforge/change.md` and writes `.specforge/plan.md`. That plan is a checklist you can give to Codex. For the photo app, it will remind Codex to look for the upload screen, backend upload endpoint, image analysis boundary, file validation, tests, and documentation.
+
+After Codex makes the change, run:
+
+```bash
+specforge check
+```
+
+`check` looks at the current Git diff and reports common risks, such as code changed without tests, API changes without docs, upload logic without obvious file validation, environment variable usage without documentation, or direct edits to generated files.
 
 ## Install
 
@@ -55,104 +55,83 @@ pip install -e .
 
 ## Quickstart
 
-Create a SpecForge setup in a repo.
+Create SpecForge files in your repo.
 
 ```bash
 specforge init
 ```
 
-Validate the default spec.
+Write your feature request in:
+
+```text
+.specforge/change.md
+```
+
+Inspect the repo.
+
+```bash
+specforge inspect
+```
+
+Create the agent checklist.
+
+```bash
+specforge propose
+```
+
+Ask Codex to implement `.specforge/plan.md`.
+
+After Codex edits files, check the result.
+
+```bash
+specforge check
+```
+
+## What SpecForge Does
+
+SpecForge gives coding agents a safer workflow:
+
+1. Describe the change in plain English.
+2. Inspect the repo before editing.
+3. Produce a practical implementation checklist.
+4. Let Codex or another agent edit the real app.
+5. Check the final diff for common missing pieces.
+
+This is meant for people who want to use coding agents without manually knowing every file that might need to change.
+
+## Experimental Generator
+
+SpecForge still includes an experimental `.appspec` parser and FastAPI plus SQLite generator. That older workflow can create a backend starter project from `.specforge/app.appspec`.
+
+The generator is not the main product promise anymore. It is useful for experiments and internal CRUD style apps, but it is not what you should start with if you are using Codex to change an existing app.
+
+Generator commands still exist:
 
 ```bash
 specforge validate
-```
-
-Preview the generated files.
-
-```bash
 specforge plan
-```
-
-Generate the backend project.
-
-```bash
 specforge apply
-```
-
-Run the demo.
-
-```bash
 specforge demo
 ```
 
-The demo prints the same before and after story from the software spend approval example.
+## What It Does Not Do
 
-## What Gets Generated
+SpecForge does not build your full app. It does not generate mobile screens. It does not call image recognition services. It does not replace Codex, Claude Code, Cursor, or code review.
 
-SpecForge v0 generates a FastAPI and SQLite backend project. It includes API routes, SQLite persistence, Pydantic schemas, CRUD helpers, workflow stubs, tests, and a custom folder for code that you own.
+For the photo app example, SpecForge can help Codex plan the upload flow and check for missing pieces. Codex still needs to implement the actual app logic and any AI vision integration.
 
-```text
-generated/
-  README.md
-  pyproject.toml
-  app/
-    main.py
-    database.py
-    models.py
-    schemas.py
-    crud.py
-    routes.py
-    workflows.py
-    custom/
-      hooks.py
-  tests/
-    test_app.py
-    test_crud.py
-    test_workflows.py
-```
+## Best Fit
 
-The generated code is meant to be reviewed. SpecForge gives you a consistent starting point, not a finished production system.
+SpecForge is best for agent assisted changes where several parts of a repo may need to move together. Examples include uploads, API changes, CRUD features, settings screens, permission changes, workflow changes, and integration work.
 
-## What It Does Not Do Yet
-
-SpecForge does not generate a frontend in v0. It does not fully execute workflows yet. Workflows are generated as metadata and service stubs so you have a clear place to add real business logic.
-
-SpecForge is also not a general purpose programming language. It is not a replacement for Python, TypeScript, Go, Rust, or normal source code. It is not a magic app builder and it is not a replacement for code review.
-
-## How To Use It With Codex Or Claude Code
-
-When you use Codex, Claude Code, Cursor, or another coding agent, ask the agent to read `.specforge/app.appspec` before editing generated code.
-
-For normal product behavior, the first edit should be in the spec. Then the agent should run `specforge validate`, `specforge plan`, and `specforge apply`. After that, review the generated code like you would review any other code.
-
-If the spec cannot express what you need, put custom logic in the generated `custom` folder or edit normal source files directly. SpecForge is useful because it handles the boring repeatable parts, not because it can express every possible app.
-
-## Examples
-
-The repository includes three examples. The task manager example is a small CRUD app with a completion workflow. The software spend approval example is the main demo. The recipe price finder example shows how external services can be represented as workflow stubs.
-
-These examples are meant to show that SpecForge is not tied to one specific app.
-
-## Current Status
-
-SpecForge is experimental. The first adapter generates FastAPI and SQLite backend projects. The best current use cases are internal tools, CRUD apps, approval flows, workflow apps, and business operations software.
-
-Generated code should be reviewed before production use.
+It is less useful for one line fixes or fully custom product logic where there is no repeatable structure to check.
 
 ## Prepublish Check
 
-Before publishing a repo that uses SpecForge, run this command.
+Before publishing a repo that uses SpecForge, run:
 
 ```bash
 specforge privacy-scan
 ```
 
 The scan looks for common private artifacts such as local paths, credential markers, private notes, and accidental instruction files.
-
-## Roadmap
-
-Future work includes a Next.js adapter, a Postgres adapter, a Prisma adapter, a Django adapter, editor syntax support, a Tree sitter grammar, real workflow execution, and a benchmark suite.
-
-## Contributing
-
-Try the examples and open issues for missing language primitives, validation rules, or adapters. Small, concrete issues are the most useful right now.

@@ -1,5 +1,7 @@
 # Adapter API
 
+Adapters are experimental. The main SpecForge workflow is now repo inspection, change planning, and diff checking.
+
 Adapters receive a validated `AppSpec` and return a mapping of relative file paths to complete file contents.
 
 Rules for future adapters:

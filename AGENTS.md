@@ -1,11 +1,9 @@
 # SpecForge Agent Guide
 
-- When changing app behavior, edit `.specforge/app.appspec` first.
-- Run `specforge validate`.
-- Run `specforge plan`.
-- Run `specforge apply`.
-- Do not manually edit generated files unless required.
-- If custom code is needed, put it in generated custom extension folders.
-- Keep generated output deterministic.
-- Keep errors specific and actionable.
-- Run tests before finalizing changes.
+- Read `.specforge/change.md`.
+- Run `specforge inspect`.
+- Run `specforge propose`.
+- Implement the checklist in `.specforge/plan.md`.
+- Run `specforge check` before finalizing.
+- Keep changes small, deterministic, and covered by tests.
+- Treat the `.appspec` generator as experimental unless the user asks for it.

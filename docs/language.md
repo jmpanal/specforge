@@ -1,6 +1,10 @@
 # SpecForge Language
 
-SpecForge v0 uses a small line-based DSL.
+The `.appspec` language is experimental. It is no longer the default SpecForge workflow.
+
+The default workflow starts with `.specforge/change.md`, `specforge inspect`, `specforge propose`, and `specforge check`.
+
+The legacy generator still uses a small line-based DSL.
 
 ```appspec
 app TaskManager

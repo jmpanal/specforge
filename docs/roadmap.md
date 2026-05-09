@@ -1,12 +1,19 @@
 # Roadmap
 
-- Next.js adapter
-- Postgres adapter
-- Prisma adapter
-- Django adapter
-- VS Code syntax highlighting
-- Tree-sitter grammar
-- real workflow execution engine
-- benchmark suite
+Near term:
 
-v0 stays narrow: API-only FastAPI + SQLite generation and workflow stubs.
+- better framework detection in `specforge inspect`
+- JSON output for `inspect` and `check`
+- more consistency rules for mobile apps
+- stronger upload and file handling checks
+- beginner examples for Codex users
+- benchmark suite for agent completeness
+
+Later:
+
+- optional adapters for generated code
+- editor integrations
+- richer repo maps
+- configurable check rules
+
+The `.appspec` FastAPI generator remains experimental.

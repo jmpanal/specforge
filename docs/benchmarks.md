@@ -4,24 +4,26 @@
 
 No measured benchmark results are published yet.
 
+The new benchmark target is agent completeness, not generator output volume.
+
 ## Methodology
 
-Scenario: add finance approval for software requests above 500.
+Scenario: add photo upload and object detection to an existing app.
 
 Compare:
 
-- normal agent coding
-- SpecForge workflow
+- normal Codex workflow with a plain prompt
+- SpecForge workflow using `inspect`, `propose`, implementation, and `check`
 
 Columns to measure:
 
-- files manually edited
-- lines manually edited
-- generated files updated
-- validation errors
-- test failures
+- files changed
+- related files missed
+- tests added or missed
+- docs added or missed
+- validation gaps found
 - total agent turns
 - approximate token usage
 - time to working change
 
-Target: SpecForge target is that the agent edits 1 spec file instead of 12 source files.
+Target: SpecForge should help the agent catch missing pieces before final review.

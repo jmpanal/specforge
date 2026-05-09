@@ -10,10 +10,15 @@ def test_cli_init_validate_plan_apply_doctor_explain(tmp_path, monkeypatch, caps
     monkeypatch.chdir(tmp_path)
     assert main(["init"]) == 0
     assert Path(".specforge/app.appspec").exists()
+    assert Path(".specforge/change.md").exists()
     assert main(["validate"]) == 0
     assert main(["plan", "--out", "generated"]) == 0
     assert main(["apply", "--out", "generated"]) == 0
     assert Path("generated/app/main.py").exists()
+    assert main(["inspect"]) == 0
+    assert main(["propose"]) == 0
+    assert Path(".specforge/plan.md").exists()
+    assert main(["check"]) == 0
     assert main(["doctor"]) == 0
     assert main(["explain"]) == 0
     out = capsys.readouterr().out

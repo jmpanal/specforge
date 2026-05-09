@@ -1,11 +1,16 @@
 # Claude Code
 
-Use SpecForge to keep behavior changes compact and reviewable.
+Use SpecForge to create a concrete checklist before Claude Code edits the repo.
 
 ```bash
-specforge validate
-specforge plan
-specforge apply
+specforge inspect
+specforge propose
 ```
 
-Claude Code should edit `.specforge/app.appspec` before manually patching generated source files. Generated code still needs normal review.
+Claude Code should read `.specforge/plan.md`, implement the checklist, run tests, and then run:
+
+```bash
+specforge check
+```
+
+The `.appspec` generator is experimental and should not be the default workflow for existing apps.

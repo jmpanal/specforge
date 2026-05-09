@@ -1,11 +1,13 @@
 # Agent Workflow
 
-1. Agent reads `.specforge/app.appspec`.
-2. Agent edits the spec.
-3. Agent runs `specforge validate`.
-4. Agent runs `specforge plan`.
-5. Agent runs `specforge apply`.
-6. Agent reviews generated output.
-7. Agent only edits generated code if the spec cannot express the change.
+SpecForge now starts from a plain English change request.
 
-Generated files are deterministic. User-owned custom code belongs in generated custom extension folders.
+1. User writes the desired change in `.specforge/change.md`.
+2. Agent runs `specforge inspect` to understand the repo shape.
+3. Agent runs `specforge propose` to create `.specforge/plan.md`.
+4. Agent implements the checklist in the real app.
+5. Agent runs the project tests.
+6. Agent runs `specforge check` to catch common missing pieces.
+7. Agent explains any remaining risk before finalizing.
+
+The older `.appspec` generator is experimental. Use it only when the user explicitly wants generated FastAPI and SQLite starter code.

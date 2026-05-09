@@ -1,17 +1,20 @@
 # Codex
 
-Use SpecForge as the first edit surface for app behavior.
-
-```bash
-specforge validate
-specforge plan
-specforge apply
-```
+Use SpecForge to help Codex avoid incomplete changes.
 
 Recommended flow:
 
-- Read `.specforge/app.appspec`.
-- Change the smallest relevant spec block.
-- Validate before generation.
-- Review the generated diff.
-- Put custom logic in generated custom extension folders.
+```bash
+specforge inspect
+specforge propose
+```
+
+Then ask Codex to implement `.specforge/plan.md`.
+
+After Codex edits the repo:
+
+```bash
+specforge check
+```
+
+If `check` reports missing tests, missing docs, upload validation gaps, or direct generated file edits, fix those before finalizing.
